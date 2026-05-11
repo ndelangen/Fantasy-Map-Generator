@@ -78,6 +78,17 @@ let burgIcons = icons.append("g").attr("id", "burgIcons");
 let anchors = icons.append("g").attr("id", "anchors");
 let armies = viewbox.append("g").attr("id", "armies");
 let markers = viewbox.append("g").attr("id", "markers");
+let fogOfWar = viewbox
+  .append("g")
+  .attr("id", "fogOfWar")
+  .attr("opacity", 1)
+  .attr("data-texture-url", "./images/pattern1.png")
+  .attr("data-invert-texture", 0)
+  .attr("data-feather-px", 40)
+  .attr("data-texture-scale", 1)
+  .style("display", "none");
+fogOfWar.append("g").attr("id", "fogOfWarHit").attr("pointer-events", "visiblePainted");
+fogOfWar.append("g").attr("id", "fogOfWarBody").attr("mask", "url(#fogOfWarAlphaMask)");
 let fogging = viewbox
   .append("g")
   .attr("id", "fogging-cont")
@@ -157,6 +168,12 @@ let options = {
   showBurgPreview: true,
   burgs: {
     groups: JSON.safeParse(localStorage.getItem("burg-groups")) || Burgs.getDefaultGroups()
+  },
+  fogOfWar: {
+    textureUrl: "./images/pattern1.png",
+    invertTexture: false,
+    featherPx: 40,
+    textureScale: 1
   }
 };
 
@@ -589,6 +606,7 @@ function invokeActiveZooming() {
 
   // journey layer: screen-constant sizing + LOD on tier change
   if (layerIsOn("toggleJourney")) syncJourneyZoom(scale);
+  if (layerIsOn("toggleFogOfWar") && typeof drawFogOfWar === "function") drawFogOfWar();
 }
 
 // add drag to upload logic, pull request from @evyatron
@@ -656,6 +674,8 @@ async function generate(options) {
     grid.cells.h = await HeightmapGenerator.generate(grid);
     pack = {}; // reset pack
     pack.journeys = [];
+    pack.fogOfWarPolygons = [];
+    pack.fogOfWarMode = "obscured";
 
     Features.markupGrid();
     addLakesInDeepDepressions();

@@ -44,6 +44,7 @@ declare global {
   var terrs: Selection<SVGGElement, unknown, null, undefined>;
   var temperature: Selection<SVGGElement, unknown, null, undefined>;
   var markers: Selection<SVGGElement, unknown, null, undefined>;
+  var fogOfWar: Selection<SVGGElement, unknown, null, undefined>;
   var defs: Selection<SVGDefsElement, unknown, null, undefined>;
   var coastline: Selection<SVGGElement, unknown, null, undefined>;
   var lakes: Selection<SVGGElement, unknown, null, undefined>;
@@ -101,6 +102,11 @@ declare global {
   var closeDialogs: (except?: string) => void;
   var drawJourney: () => void;
   var toggleJourney: (event?: Event) => void;
+  var drawFogOfWar: () => void;
+  var toggleFogOfWar: (event?: Event) => void;
+  var ringToSmoothBezierPathD: (ring: [number, number][]) => string;
+  var ensureFogOfWarOptions: () => void;
+  var FogOfWarEditor: { open: () => void };
   var clearMainTip: () => void;
   var restoreDefaultEvents: () => void;
   var customization: number;

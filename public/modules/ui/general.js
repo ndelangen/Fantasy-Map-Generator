@@ -112,9 +112,34 @@ function showNotes(e) {
   }
 }
 
+function fogCoversPoint(point) {
+  if (typeof layerIsOn !== "function" || !layerIsOn("toggleFogOfWar")) return false;
+  const root = document.getElementById("fogOfWar");
+  if (!root || getComputedStyle(root).display === "none") return false;
+  if (typeof window.fogBlocksInteraction !== "function") return false;
+  const fw = d3.select("#fogOfWar");
+  const af = fw.attr("data-feather-px");
+  let featherPx = af != null && String(af).trim() !== "" ? +af : Number.NaN;
+  if (!Number.isFinite(featherPx)) featherPx = +(options?.fogOfWar?.featherPx ?? Number.NaN);
+  if (!Number.isFinite(featherPx)) featherPx = 40;
+  featherPx = Math.max(0, featherPx);
+  const zs = Math.max(scale || 1, 0.001);
+  const featherWorld = featherPx / zs;
+  return window.fogBlocksInteraction(
+    point[0],
+    point[1],
+    pack.fogOfWarMode || "obscured",
+    pack.fogOfWarPolygons || [],
+    graphWidth,
+    graphHeight,
+    featherWorld,
+  );
+}
+
 // show viewbox tooltip if main tooltip is blank
 function showMapTooltip(point, e, i, g) {
   tip(""); // clear tip
+  if (fogCoversPoint(point)) return;
   const path = e.composedPath ? e.composedPath() : getComposedPath(e.target); // apply polyfill
   if (!path[path.length - 8]) return;
   const group = path[path.length - 7].id;

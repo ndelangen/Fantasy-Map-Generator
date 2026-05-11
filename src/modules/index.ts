@@ -21,3 +21,4 @@ import "./markers-generator";
 import "./fonts";
 import "./resample";
 import "./ui-tour";
+import "./fog-of-war-geometry";

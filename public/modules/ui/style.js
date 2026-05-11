@@ -121,6 +121,7 @@ function selectStyleElement() {
   const isLayerOff =
     styleElement !== "ocean" &&
     styleElement !== "journeys" &&
+    styleElement !== "fogOfWar" &&
     (el.style("display") === "none" || !el.selectAll("*").size());
   styleIsOff.style.display = isLayerOff ? "block" : "none";
 
@@ -132,9 +133,11 @@ function selectStyleElement() {
   }
 
   // opacity
-  if (!["landmass", "ocean", "regions", "legend"].includes(styleElement)) {
+  if (!["landmass", "ocean", "regions", "legend", "fogOfWar"].includes(styleElement)) {
     styleOpacity.style.display = "block";
     styleOpacityInput.value = el.attr("opacity") || 1;
+  } else {
+    styleOpacity.style.display = "none";
   }
 
   // filter
@@ -238,6 +241,27 @@ function selectStyleElement() {
   if (styleElement === "markers") {
     styleMarkers.style.display = "block";
     styleRescaleMarkers.checked = +markers.attr("rescale");
+  }
+
+  if (styleElement === "fogOfWar") {
+    if (typeof ensureFogOfWarOptions === "function") ensureFogOfWarOptions();
+    ensureEl("styleFogOfWar").style.display = "table-row-group";
+    const fw = el;
+    const fo = options.fogOfWar || {};
+    ensureEl("styleFogOfWarTextureUrl").value =
+      fw.attr("data-texture-url") || fo.textureUrl || "./images/pattern1.png";
+    ensureEl("styleFogOfWarInvert").checked = !!+(fw.attr("data-invert-texture") ?? (fo.invertTexture ? 1 : 0));
+    {
+      const af = fw.attr("data-feather-px");
+      let fv = af != null && String(af).trim() !== "" ? +af : Number.NaN;
+      if (!Number.isFinite(fv)) fv = +fo.featherPx;
+      if (!Number.isFinite(fv)) fv = 40;
+      ensureEl("styleFogOfWarFeatherPx").value = String(Math.max(0, fv));
+    }
+    const ts = +(fw.attr("data-texture-scale") || fo.textureScale || 1);
+    ensureEl("styleFogOfWarTextureScale").value = Number.isFinite(ts) && ts > 0 ? ts : 1;
+    const op = parseFloat(fw.attr("opacity"));
+    ensureEl("styleFogOfWarOpacity").value = Number.isFinite(op) ? op : 1;
   }
 
   if (styleElement === "journeys") {
@@ -656,6 +680,49 @@ d3.select("#styleJourneyOutlineColor").on("input", function () {
 d3.select("#styleJourneyOutlineScreenPx").on("input", function () {
   svg.select("#journeys").attr("data-outline-screen-px", this.value);
   redrawJourneyIfVisible();
+});
+
+function redrawFogOfWarIfVisible() {
+  if (typeof drawFogOfWar === "function" && layerIsOn("toggleFogOfWar")) drawFogOfWar();
+}
+
+d3.select("#styleFogOfWarTextureUrl").on("change input", function () {
+  const v = this.value.trim() || "./images/pattern1.png";
+  svg.select("#fogOfWar").attr("data-texture-url", v);
+  options.fogOfWar.textureUrl = v;
+  redrawFogOfWarIfVisible();
+});
+
+d3.select("#styleFogOfWarInvert").on("change", function () {
+  svg.select("#fogOfWar").attr("data-invert-texture", this.checked ? 1 : 0);
+  options.fogOfWar.invertTexture = this.checked;
+  redrawFogOfWarIfVisible();
+});
+
+d3.select("#styleFogOfWarFeatherPx").on("input change", function () {
+  const v = +this.value || 0;
+  svg.select("#fogOfWar").attr("data-feather-px", v);
+  options.fogOfWar.featherPx = v;
+  redrawFogOfWarIfVisible();
+});
+
+d3.select("#styleFogOfWarTextureScale").on("input change", function () {
+  let v = +this.value;
+  if (!Number.isFinite(v) || v <= 0) v = 1;
+  v = Math.min(32, Math.max(0.05, v));
+  this.value = String(v);
+  svg.select("#fogOfWar").attr("data-texture-scale", v);
+  options.fogOfWar.textureScale = v;
+  redrawFogOfWarIfVisible();
+});
+
+d3.select("#styleFogOfWarOpacity").on("input change", function () {
+  let v = parseFloat(this.value);
+  if (!Number.isFinite(v)) v = 1;
+  v = Math.min(1, Math.max(0, v));
+  this.value = String(v);
+  svg.select("#fogOfWar").attr("opacity", v);
+  redrawFogOfWarIfVisible();
 });
 
 styleCoastlineAuto.on("change", function () {

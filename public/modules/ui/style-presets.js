@@ -162,6 +162,7 @@ function applyStyleWithUiRefresh(style) {
   fitScaleBar(scaleBar, svgWidth, svgHeight);
 
   if (layerIsOn("toggleJourney")) drawJourney();
+  if (layerIsOn("toggleFogOfWar") && typeof drawFogOfWar === "function") drawFogOfWar();
 }
 
 function addStylePreset() {
@@ -265,6 +266,14 @@ function addStylePreset() {
         "data-waypoint-ring-screen-px",
         "data-outline-color",
         "data-outline-screen-px"
+      ],
+      "#fogOfWar": [
+        "opacity",
+        "filter",
+        "data-texture-url",
+        "data-invert-texture",
+        "data-feather-px",
+        "data-texture-scale"
       ],
       "#emblems": ["opacity", "stroke-width", "filter"],
       "#emblems > #stateEmblems": ["data-size"],

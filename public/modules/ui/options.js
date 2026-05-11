@@ -200,6 +200,11 @@ function applyGraphSize() {
   oceanPattern.select("rect").attr("x", 0).attr("y", 0).attr("width", graphWidth).attr("height", graphHeight);
   oceanLayers.select("rect").attr("x", 0).attr("y", 0).attr("width", graphWidth).attr("height", graphHeight);
   fogging.selectAll("rect").attr("x", 0).attr("y", 0).attr("width", graphWidth).attr("height", graphHeight);
+  if (typeof fogOfWar !== "undefined" && fogOfWar.size?.()) {
+    const br = fogOfWar.select("#fogOfWarBody rect");
+    if (br.size()) br.attr("width", graphWidth).attr("height", graphHeight);
+  }
+  if (typeof drawFogOfWar === "function") drawFogOfWar();
   defs.select("mask#fog > rect").attr("width", graphWidth).attr("height", graphHeight);
   defs.select("mask#water > rect").attr("width", graphWidth).attr("height", graphHeight);
 }

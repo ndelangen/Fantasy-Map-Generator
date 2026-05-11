@@ -731,6 +731,13 @@
               Scale Bar
             </li>
             <li
+              id="toggleFogOfWar"
+              data-tip="Polygon fog of war: toggle overlay. Ctrl + click to edit texture and feather"
+              onclick="toggleFogOfWar(event)"
+            >
+              Fog of war
+            </li>
+            <li
               id="toggleVignette"
               data-tip="Vignette (border fading): click to toggle. Ctrl + click to edit style"
               data-shortcut="[ (left square bracket)"
@@ -802,6 +809,7 @@
             <option value="cults">Cultures</option>
             <option value="emblems">Emblems</option>
             <option value="fogging">Fogging</option>
+            <option value="fogOfWar">Fog of war</option>
             <option value="gridOverlay">Grid</option>
             <option value="terrs">Heightmap</option>
             <option value="ice">Ice</option>
@@ -1533,6 +1541,39 @@
                 <td>Waypoint ring (px)</td>
                 <td>
                   <input id="styleJourneyWaypointRingScreenPx" type="number" min="0" max="48" step="0.5" />
+                </td>
+              </tr>
+            </tbody>
+
+            <tbody id="styleFogOfWar">
+              <tr data-tip="Fog overlay opacity (0–1)">
+                <td>Opacity</td>
+                <td>
+                  <input id="styleFogOfWarOpacity" type="number" min="0" max="1" step="0.05" />
+                </td>
+              </tr>
+              <tr data-tip="Image URL for tiled fog texture (local path or remote URL)">
+                <td>Texture URL</td>
+                <td>
+                  <input id="styleFogOfWarTextureUrl" type="text" style="width: 100%" spellcheck="false" />
+                </td>
+              </tr>
+              <tr data-tip="Tile size multiplier vs base (1 = default repeat distance). Larger values stretch the texture.">
+                <td>Texture scale</td>
+                <td>
+                  <input id="styleFogOfWarTextureScale" type="number" min="0.05" max="32" step="0.05" />
+                </td>
+              </tr>
+              <tr data-tip="Invert texture colors (does not affect polygon geometry)">
+                <td colspan="2">
+                  <input id="styleFogOfWarInvert" class="checkbox" type="checkbox" />
+                  <label for="styleFogOfWarInvert" class="checkbox-label">Invert texture</label>
+                </td>
+              </tr>
+              <tr data-tip="Edge softness in screen pixels (recomputed on zoom)">
+                <td>Feather (px)</td>
+                <td>
+                  <input id="styleFogOfWarFeatherPx" type="number" min="0" max="200" step="1" />
                 </td>
               </tr>
             </tbody>
@@ -2335,6 +2376,12 @@
               data-shortcut="Shift + J"
             >
               Journey
+            </button>
+            <button
+              id="editFogOfWar"
+              data-tip="Edit polygon fog of war (obscured or revealed regions)"
+            >
+              Fog of war
             </button>
           </div>
 
@@ -8738,6 +8785,7 @@
 
     <script defer src="modules/ui/style.js?v=1.122.0"></script>
     <script defer src="modules/ui/editors.js?v=1.120.5"></script>
+    <script defer src="modules/dynamic/editors/fog-of-war-editor.js?v=1.122.0"></script>
     <script defer src="modules/ui/tools.js?v=1.122.0"></script>
     <script defer src="modules/ui/world-configurator.js?v=1.120.5"></script>
     <script defer src="modules/ui/heightmap-editor.js?v=1.120.5"></script>

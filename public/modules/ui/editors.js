@@ -13,6 +13,7 @@ function restoreDefaultEvents() {
 
 // handle viewbox click
 function clicked() {
+  if (customization === 15) return;
   const el = d3.event.target;
   const parent = el?.parentElement;
   const grand = parent?.parentElement;

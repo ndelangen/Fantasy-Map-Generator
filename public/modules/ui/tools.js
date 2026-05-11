@@ -72,6 +72,7 @@ toolsContent.addEventListener("click", function (event) {
   else if (button === "addRoute") createRoute();
   else if (button === "addMarker") toggleAddMarker();
   else if (button === "addJourney") editJourney();
+  else if (button === "editFogOfWar") FogOfWarEditor.open();
   // click to create a new map buttons
   else if (button === "openSubmapTool") openSubmapTool();
   else if (button === "openTransformTool") openTransformTool();
