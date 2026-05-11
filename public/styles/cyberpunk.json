@@ -663,5 +663,13 @@
     "data-right": 18,
     "data-bottom": 18,
     "data-left": 12
+  },
+  "#fogOfWar": {
+    "opacity": 1,
+    "filter": "",
+    "data-texture-url": "./images/pattern1.png",
+    "data-invert-texture": "0",
+    "data-feather-px": "40",
+    "data-texture-scale": "1"
   }
 }

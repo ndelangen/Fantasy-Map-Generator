@@ -106,6 +106,10 @@ function prepareMapData() {
   const journey = JSON.stringify(
     Array.isArray(pack.journeys) ? pack.journeys : [],
   );
+  const fogOfWar = JSON.stringify({
+    polygons: Array.isArray(pack.fogOfWarPolygons) ? pack.fogOfWarPolygons : [],
+    mode: pack.fogOfWarMode === "revealed" ? "revealed" : "obscured",
+  });
 
   // store name array only if not the same as default
   const defaultNB = Names.getNameBases();
@@ -161,7 +165,8 @@ function prepareMapData() {
     routes,
     zones,
     ice,
-    journey
+    journey,
+    fogOfWar
   ].join("\r\n");
   return mapData;
 }

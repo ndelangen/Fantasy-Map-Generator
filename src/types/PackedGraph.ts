@@ -2,6 +2,7 @@ import type { Quadtree } from "d3";
 import type { Burg } from "../modules/burgs-generator";
 import type { Culture } from "../modules/cultures-generator";
 import type { PackedGraphFeature } from "../modules/features";
+import type { FogOfWarPolygon } from "../modules/fog-of-war-geometry";
 import type { StoredJourney } from "../modules/journey";
 import type { Province } from "../modules/provinces-generator";
 import type { River } from "../modules/river-generator";
@@ -67,4 +68,6 @@ export interface PackedGraph {
   ice: any[];
   provinces: Province[];
   journeys?: StoredJourney[];
+  fogOfWarPolygons?: FogOfWarPolygon[];
+  fogOfWarMode?: "obscured" | "revealed";
 }

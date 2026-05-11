@@ -235,6 +235,10 @@ t,
   pointer-events: none;
 }
 
+#fogOfWarBody {
+  pointer-events: none;
+}
+
 #terrain,
 #burgIcons {
   cursor: pointer;

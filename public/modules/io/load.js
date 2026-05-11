@@ -358,6 +358,7 @@ async function parseLoadedData(data, mapVersion) {
       armies = viewbox.select("#armies");
       markers = viewbox.select("#markers");
       journeys = viewbox.select("#journeys");
+      fogOfWar = viewbox.select("#fogOfWar");
       ruler = viewbox.select("#ruler");
       fogging = viewbox.select("#fogging");
       debug = viewbox.select("#debug");
@@ -374,6 +375,19 @@ async function parseLoadedData(data, mapVersion) {
       }
       if (!journeys.size()) {
         journeys = viewbox.insert("g", "#routes").attr("id", "journeys").style("display", "none");
+      }
+      if (!fogOfWar.size()) {
+        fogOfWar = viewbox
+          .insert("g", "#fogging")
+          .attr("id", "fogOfWar")
+          .attr("opacity", 1)
+          .attr("data-texture-url", "./images/pattern1.png")
+          .attr("data-invert-texture", 0)
+          .attr("data-feather-px", 40)
+          .attr("data-texture-scale", 1)
+          .style("display", "none");
+        fogOfWar.append("g").attr("id", "fogOfWarHit").attr("pointer-events", "visiblePainted");
+        fogOfWar.append("g").attr("id", "fogOfWarBody").attr("mask", "url(#fogOfWarAlphaMask)");
       }
     }
 
@@ -429,6 +443,22 @@ async function parseLoadedData(data, mapVersion) {
         pack.journeys = Array.isArray(parsedJourney) ? parsedJourney : [];
       }
 
+      {
+        pack.fogOfWarPolygons = [];
+        pack.fogOfWarMode = "obscured";
+        if (data[41]) {
+          try {
+            const parsed = JSON.parse(data[41]);
+            if (parsed && typeof parsed === "object") {
+              if (Array.isArray(parsed.polygons)) pack.fogOfWarPolygons = parsed.polygons;
+              if (parsed.mode === "revealed") pack.fogOfWarMode = "revealed";
+            }
+          } catch {
+            /* keep defaults */
+          }
+        }
+      }
+
       if (data[31]) {
         const namesDL = data[31].split("/");
         namesDL.forEach((d, i) => {
@@ -481,6 +511,12 @@ async function parseLoadedData(data, mapVersion) {
       if (hasChild(markers, "svg")) turnOn("toggleMarkers");
       if (isVisible(journeys) && (hasChild(journeys, "path") || hasChild(journeys, "circle")))
         turnOn("toggleJourney");
+      if (
+        fogOfWar.size() &&
+        isVisible(fogOfWar) &&
+        (pack.fogOfWarPolygons?.length || pack.fogOfWarMode === "revealed")
+      )
+        turnOn("toggleFogOfWar");
       if (isVisible(ruler)) turnOn("toggleRulers");
       if (isVisible(scaleBar)) turnOn("toggleScaleBar");
       if (isVisibleNode(ensureEl("vignette"))) turnOn("toggleVignette");
@@ -753,6 +789,7 @@ async function parseLoadedData(data, mapVersion) {
       if (rulers && layerIsOn("toggleRulers")) rulers.draw();
       if (layerIsOn("toggleGrid")) drawGrid();
       if (layerIsOn("toggleJourney")) drawJourney();
+      if (layerIsOn("toggleFogOfWar") && typeof drawFogOfWar === "function") drawFogOfWar();
     }
 
     {

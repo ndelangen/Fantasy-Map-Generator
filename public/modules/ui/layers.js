@@ -232,6 +232,7 @@ function drawLayers() {
   if (layerIsOn("toggleBurgIcons")) drawBurgIcons();
   if (layerIsOn("toggleMilitary")) drawMilitary();
   if (layerIsOn("toggleMarkers")) drawMarkers();
+  if (layerIsOn("toggleFogOfWar") && typeof drawFogOfWar === "function") drawFogOfWar();
   if (layerIsOn("toggleRulers")) rulers.draw();
   // scale bar
   // vignette
@@ -1041,6 +1042,195 @@ function moveLayer(event, ui) {
   else if (next) el.insertBefore(next);
 }
 
+function ensureFogOfWarPack() {
+  if (!Array.isArray(pack.fogOfWarPolygons)) pack.fogOfWarPolygons = [];
+  if (pack.fogOfWarMode !== "revealed") pack.fogOfWarMode = "obscured";
+}
+
+function ensureFogOfWarOptions() {
+  const base = {textureUrl: "./images/pattern1.png", invertTexture: false, featherPx: 40, textureScale: 1};
+  if (!options.fogOfWar || typeof options.fogOfWar !== "object") options.fogOfWar = {};
+  for (const k in base) {
+    if (options.fogOfWar[k] === undefined) options.fogOfWar[k] = base[k];
+  }
+}
+
+/** Fog polygons editor open — customization 15 matches fog-of-war-editor.js (DOM edit group may lag one frame). */
+function fogOfWarEditorIsActive(root) {
+  if (typeof customization !== "undefined" && customization === 15) return true;
+  return root.size() && !root.select("#fogOfWarEdit").empty();
+}
+
+function fogOfWarShowRoot(root) {
+  if (typeof $ !== "undefined") $("#fogOfWar").stop(true, true);
+  root.style("display", null);
+}
+
+function fogOfWarHideRoot(root) {
+  root.style("display", "none");
+}
+
+function drawFogOfWar() {
+  ensureFogOfWarPack();
+  ensureFogOfWarOptions();
+  const root = d3.select("#fogOfWar");
+  if (!root.size()) return;
+
+  if (!layerIsOn("toggleFogOfWar")) {
+    fogOfWarHideRoot(root);
+    return;
+  }
+
+  const mode = pack.fogOfWarMode || "obscured";
+  const polys = pack.fogOfWarPolygons || [];
+  const fo = options.fogOfWar;
+
+  const textureUrl = root.attr("data-texture-url") || fo.textureUrl;
+  const attrFeather = root.attr("data-feather-px");
+  let featherPx =
+    attrFeather != null && String(attrFeather).trim() !== "" ? +attrFeather : Number.NaN;
+  if (!Number.isFinite(featherPx)) featherPx = +fo.featherPx;
+  if (!Number.isFinite(featherPx)) featherPx = 40;
+  featherPx = Math.max(0, featherPx);
+  const invert = +root.attr("data-invert-texture") || (+fo.invertTexture ? 1 : 0);
+  let textureScale = +root.attr("data-texture-scale");
+  if (!Number.isFinite(textureScale) || textureScale <= 0) textureScale = +fo.textureScale > 0 ? +fo.textureScale : 1;
+  textureScale = Math.min(32, Math.max(0.05, textureScale));
+
+  const zs = Math.max(scale || 1, 0.001);
+  const featherWorld = featherPx / zs;
+  const pad = featherWorld * 4;
+
+  const mattePath =
+    typeof window.buildFogMattePathD === "function"
+      ? window.buildFogMattePathD(mode, polys, graphWidth, graphHeight, pad)
+      : "";
+
+  // Obscured mode with zero saved polygons yields no matte path; hiding #fogOfWar would
+  // also hide #fogOfWarEdit, so keep the group visible while the editor is open.
+  const fogEditorActive = fogOfWarEditorIsActive(root);
+
+  if (!mattePath) {
+    if (fogEditorActive) {
+      fogOfWarShowRoot(root);
+      root.select("#fogOfWarBody").selectAll("*").remove();
+      root.select("#fogOfWarHit").selectAll("*").remove();
+    } else {
+      fogOfWarHideRoot(root);
+      root.select("#fogOfWarBody").selectAll("*").remove();
+      root.select("#fogOfWarHit").selectAll("*").remove();
+    }
+    return;
+  }
+
+  let blurF = defs.select("#fogOfWarMatteBlur");
+  if (blurF.empty()) {
+    blurF = defs
+      .append("filter")
+      .attr("id", "fogOfWarMatteBlur")
+      .attr("filterUnits", "userSpaceOnUse")
+      .attr("color-interpolation-filters", "sRGB");
+    blurF.append("feGaussianBlur").attr("in", "SourceGraphic").attr("stdDeviation", 1);
+  }
+  blurF
+    .attr("x", -pad * 2)
+    .attr("y", -pad * 2)
+    .attr("width", graphWidth + pad * 4)
+    .attr("height", graphHeight + pad * 4);
+  blurF.select("feGaussianBlur").attr("stdDeviation", rn(featherWorld * 0.55, 3));
+
+  let maskEl = defs.select("#fogOfWarAlphaMask");
+  if (maskEl.empty()) {
+    maskEl = defs.append("mask").attr("id", "fogOfWarAlphaMask").attr("maskUnits", "userSpaceOnUse");
+    maskEl
+      .append("g")
+      .attr("filter", "url(#fogOfWarMatteBlur)")
+      .append("path")
+      .attr("id", "fogOfWarMaskPath")
+      .attr("fill", "#ffffff")
+      .attr("fill-rule", "evenodd");
+  }
+  defs.select("#fogOfWarMaskPath").attr("d", mattePath);
+  const maskG = defs.select("#fogOfWarAlphaMask > g");
+  if (maskG.size()) {
+    maskG.attr("filter", featherWorld > 1e-9 ? "url(#fogOfWarMatteBlur)" : null);
+  }
+
+  const tileBase = 256;
+  const tile = rn(tileBase * textureScale, 3);
+
+  let pat = defs.select("#fogOfWarPatternTile");
+  if (pat.empty()) {
+    pat = defs
+      .append("pattern")
+      .attr("id", "fogOfWarPatternTile")
+      .attr("patternUnits", "userSpaceOnUse")
+      .attr("width", tile)
+      .attr("height", tile);
+    pat.append("image").attr("width", tile).attr("height", tile).attr("preserveAspectRatio", "none");
+  }
+  pat.attr("width", tile).attr("height", tile);
+  pat.select("image").attr("width", tile).attr("height", tile).attr("href", textureUrl).attr("xlink:href", textureUrl);
+
+  if (defs.select("#fogOfWarInvertFilter").empty()) {
+    const inv = defs.append("filter").attr("id", "fogOfWarInvertFilter").attr("color-interpolation-filters", "sRGB");
+    inv
+      .append("feColorMatrix")
+      .attr("type", "matrix")
+      .attr("values", "-1 0 0 0 1  0 -1 0 0 1  0 0 -1 0 1  0 0 0 1 0");
+  }
+
+  const body = root.select("#fogOfWarBody");
+  body.attr("mask", "url(#fogOfWarAlphaMask)");
+  body.attr("filter", invert ? "url(#fogOfWarInvertFilter)" : null);
+  body.attr("pointer-events", "none");
+
+  body.selectAll("*").remove();
+  body
+    .append("rect")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("width", graphWidth)
+    .attr("height", graphHeight)
+    .attr("fill", "url(#fogOfWarPatternTile)");
+
+  const hit = root.select("#fogOfWarHit");
+  hit.selectAll("*").remove();
+  const sw = rn(featherWorld * 2.5, 3);
+  const hitPath = hit
+    .append("path")
+    .attr("d", mattePath)
+    .attr("fill", "#ffffff")
+    .attr("fill-opacity", 0.02)
+    .attr("fill-rule", "evenodd");
+  if (sw > 1e-9) {
+    hitPath
+      .attr("stroke", "#ffffff")
+      .attr("stroke-opacity", 0.02)
+      .attr("stroke-width", sw)
+      .attr("vector-effect", "non-scaling-stroke");
+  }
+
+  fogOfWarShowRoot(root);
+}
+
+function toggleFogOfWar(event) {
+  if (!layerIsOn("toggleFogOfWar")) {
+    turnButtonOn("toggleFogOfWar");
+    if (typeof $ !== "undefined") $("#fogOfWar").stop(true, true);
+    drawFogOfWar();
+    if (event && isCtrlClick(event)) editStyle("fogOfWar");
+  } else {
+    if (event && isCtrlClick(event)) return editStyle("fogOfWar");
+    const root = d3.select("#fogOfWar");
+    if (fogOfWarEditorIsActive(root)) {
+      return tip("Exit the fog of war editor before hiding this layer", false, "error");
+    }
+    turnButtonOff("toggleFogOfWar");
+    drawFogOfWar();
+  }
+}
+
 // define connection between option layer buttons and actual svg groups to move the element
 function getLayer(id) {
   if (id === "toggleLakes") return $("#lakes");
@@ -1068,5 +1258,6 @@ function getLayer(id) {
   if (id === "toggleBurgIcons") return $("#icons");
   if (id === "toggleMarkers") return $("#markers");
   if (id === "toggleJourney") return $("#journeys");
+  if (id === "toggleFogOfWar") return $("#fogOfWar");
   if (id === "toggleRulers") return $("#ruler");
 }
